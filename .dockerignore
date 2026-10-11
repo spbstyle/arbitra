@@ -1,0 +1,29 @@
+# Virtual environments
+.venv
+venv
+env
+
+# Python bytecode & cache
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+
+# Git repository
+.git
+../.gitignore
+
+# IDE & Editor configuration
+.idea
+.vscode
+*.swp
+
+# Secrets & Local environment variables
+app/.env
+*.env.local
+
+# Local SQLite databases & benchmark artifacts
+*.db
+*.sqlite
+humaneval.jsonl.gz
+benchmark_results.json
