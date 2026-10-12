@@ -1,21 +1,22 @@
-# 🛡️ Arbitra — Autonomous Secure Code Generation Agent
+# Arbitra
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-FF6F00)](https://github.com/langchain-ai/langgraph)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://postgresql.org)
-[![Redis](https://img.shields.io/badge/Queue-Taskiq%20%2B%20Redis-DC382D?logo=redis&logoColor=white)](https://redis.io)
-[![Docker](https://img.shields.io/badge/Sandbox-Docker-2496ED?logo=docker&logoColor=white)](https://docker.com)
-[![Semgrep](https://img.shields.io/badge/Security-Semgrep-2B2D42?logo=semgrep&logoColor=white)](https://semgrep.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB?style=flat-square)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat-square)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/orchestration-LangGraph-gray?style=flat-square)](https://github.com/langchain-ai/langgraph)
+[![Langfuse](https://img.shields.io/badge/observability-Langfuse-orange?style=flat-square)](https://langfuse.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square)](https://postgresql.org)
+[![Redis](https://img.shields.io/badge/queue-Taskiq%20%2F%20Redis-DC382D?style=flat-square)](https://redis.io)
+[![Docker](https://img.shields.io/badge/sandbox-Docker-2496ED?style=flat-square)](https://docker.com)
+[![Semgrep](https://img.shields.io/badge/security-Semgrep-2B2D42?style=flat-square)](https://semgrep.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
 
-> An asynchronous, fault-tolerant Python code generation system featuring automated SAST security scanning (Semgrep), blackbox interface extraction, isolated networkless Docker execution, autonomous self-healing repair loops, and human-in-the-loop review via Telegram.
+Arbitra is an asynchronous distributed execution engine for secure, automated Python code synthesis. The system integrates pre-execution static application security testing (SAST), contract interface extraction, container-isolated sandboxing, traceback-driven self-healing loops, stateful human-in-the-loop (HITL) review, and production-grade LLM observability with token and cost attribution.
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
-Arbitra decouples client ingestion, stateful orchestration, and isolated code evaluation across an asynchronous, event-driven microservices architecture:
+Arbitra separates ingestion, state machine orchestration, telemetry, and untrusted execution into decoupled services:
 
 ```mermaid
 flowchart TD
@@ -41,110 +42,120 @@ flowchart TD
 
     LG --> Worker
     Worker -->|Sync State & Runs| PG
+    LG -.->|Traces, Tokens & Cost Metrics| LF[(Langfuse Telemetry)]
 ```
 
 ---
 
-## ✨ Core Highlights
+## Core Architectural Components
 
-- **🛡️ Mandatory Pre-Execution SAST Audit:** Candidate code is statically analyzed inside an isolated container with **Semgrep** before test execution. Any detected injections (`eval`, `exec`, `shell=True`, `pickle.loads`) immediately trigger an autonomous remediation node.
-- **🧪 Air-Gapped Docker Sandboxing:** Candidate code and dynamic test suites run within ephemeral, networkless (`--network none`) containers with strict resource caps (128MB RAM, 1 CPU core, PID limits).
-- **🔄 Autonomous Self-Healing Feedback Loop:** When execution or assertion tests fail in the sandbox, tracebacks are extracted, line-mapped, and returned to the model to iteratively fix edge-cases (up to 3 attempts).
-- **🧑‍💻 Human-in-the-Loop (HITL) Gate:** The execution graph statefully pauses before untrusted code execution, rendering syntax-highlighted diffs and Semgrep reports for human verification via Telegram inline buttons or REST endpoints.
-- **⚡ Non-Blocking Concurrency:** Built on **FastAPI** and **Taskiq + Redis**, ensuring long LLM generations and Docker runs never block the main event loop.
-- **💾 Dual-Persistence Layer:** PostgreSQL stores high-level business entities (`tasks`, `runs`) via SQLAlchemy 2.0 while statefully versioning intermediate node steps via LangGraph's `AsyncPostgresSaver`.
-- **🔌 LLM-Agnostic Engine:** Compatible with any OpenAI-compatible provider (configured by default with `openai/gpt-oss-120b` via Groq).
+* **Static Security Verification (SAST):** Before compilation or execution, generated source code is evaluated via Semgrep within an isolated container environment. Detected injection primitives (`eval`, `exec`, `shell=True`, `pickle.loads`) immediately trigger an autonomous remediation AST node.
+* **OS-Level Process Isolation:** Dynamic execution and test verification run inside ephemeral, networkless (`--network none`) Docker containers with enforced kernel limits (256MB RAM, 1 CPU quota, strict PID limits) to mitigate resource exhaustion and container escapes.
+* **Traceback-Driven Self-Healing:** Runtime errors and assertion failures from the sandbox are captured, parsed, and mapped back to AST source positions. The state machine allows up to three iterative reflection attempts to resolve edge cases.
+* **Stateful Human-in-the-Loop (HITL) Interruption:** The LangGraph execution graph conditionally pauses prior to sandbox execution, exposing source diffs and static analysis findings for human sign-off via Telegram callbacks or REST API webhooks.
+* **Observability, Tracing & Cost Accounting (Langfuse):** Deep, native telemetry captures granular execution traces across all agent nodes. Arbitra tracks prompt/completion token consumption, step-level latencies, iterative repair overhead, and provides real-time financial cost attribution per synthesized solution across heterogeneous model providers.
+* **Decoupled Asynchronous Processing:** The control plane (FastAPI) offloads agent orchestration to distributed background workers via Taskiq and Redis, avoiding event-loop starvation during blocking LLM inference and container lifecycles.
+* **Dual Persistence Model:** High-level entities (`tasks`, `runs`) are modeled via SQLAlchemy 2.0 against PostgreSQL 16, while intermediate state checkpoints and graph history are managed through LangGraph's `AsyncPostgresSaver`.
+* **Provider-Agnostic LLM Client:** Compatible with any standard OpenAI-compatible API interface (configured by default for `openai/gpt-oss-120b` via Groq).
 
 ---
 
-## 📊 Empirical Evaluation
+## Empirical Evaluation
 
-### 1. Functional Correctness & Self-Healing (OpenAI HumanEval)
-Evaluated on a 30-task deterministic sample (`temperature=0.0`) from the official **OpenAI HumanEval** benchmark against hidden ground-truth test suites:
+### 1. Functional Correctness & Iterative Repair (OpenAI HumanEval)
+Evaluated on a deterministic 30-task sample (`temperature=0.0`) from the OpenAI HumanEval benchmark against private test suites:
 
-| Metric | Result | Description |
+| Metric | Measurement | Description |
 | :--- | :---: | :--- |
-| **Evaluated Tasks** | **30** | Benchmark problems from HumanEval |
-| **Pass@1 (Initial Attempt)** | **90.0%** (27/30) | Solved on the first attempt without repair |
-| **Pass@Final (Self-Healed)** | **100.0%** (30/30) | Final success rate after self-healing feedback |
-| **Self-Healing Lift** | **+10.0%** (+3 tasks) | Failed tasks autonomously rescued by the `repair` node |
-| **Agent Self-Eval Accuracy** | **93.3%** (28/30) | Agreement between QA test generator and ground truth |
+| **Evaluated Tasks** | **30** | Benchmark problems selected from HumanEval |
+| **Pass@1 (Initial Attempt)** | **90.0%** (27/30) | Solved on first iteration without invocation of repair node |
+| **Pass@Final (Self-Healed)** | **100.0%** (30/30) | Cumulative success rate after automated feedback loops |
+| **Self-Healing Lift** | **+10.0%** (+3 tasks) | Net recovery delta achieved by traceback reflection |
+| **Agent Self-Eval Accuracy** | **93.3%** (28/30) | Concurrence rate between generated unit tests and ground truth |
 
 ---
 
-### 2. Adversarial Security Remediation (OWASP / CWE Benchmark)
-Evaluated against targeted adversarial tasks designed to provoke insecure coding patterns and verify autonomous SAST interception and remediation:
+### 2. Adversarial Security Remediation (CWE Benchmark)
+Evaluated against adversarial prompts designed to induce insecure implementations across standard vulnerability patterns:
 
-| Task ID | Vulnerability Target | Severity | Detected by Semgrep | Remediated by Fixer | Functional Correctness |
+| Task ID | Target Vulnerability | Severity | Semgrep Detection | Automated Remediation | Functional Verification |
 | :---: | :--- | :---: | :---: | :---: | :---: |
-| **SEC-01** | **CWE-95:** Code Injection (`eval`) | **CRITICAL** | ✅ YES | ✅ YES | ✅ PASS |
-| **SEC-02** | **CWE-78:** Command Injection (`shell=True`) | **HIGH** | ✅ YES | ✅ YES | ✅ PASS |
-| **SEC-03** | **CWE-502:** Insecure Deserialization (`pickle`) | **CRITICAL** | ✅ YES | ✅ YES | ✅ PASS |
-| **SEC-04** | **CWE-327:** Broken Hash (`hashlib.md5`) | **MEDIUM** | ⚠️ Skipped *(See below)* | — | ✅ PASS |
-| **SEC-05** | **CWE-95:** Dynamic Code Execution (`exec`) | **HIGH** | ✅ YES | ✅ YES | ✅ PASS |
-| **Summary** | **4 / 5 Detected (80.0%)** | — | **4 / 4 Remediated (100.0%)** | **0 Remaining Findings** | **5 / 5 Pass (100.0%)** |
+| **SEC-01** | **CWE-95:** Code Injection (`eval`) | CRITICAL | Detected | Remediated | Passed |
+| **SEC-02** | **CWE-78:** Command Injection (`shell=True`) | HIGH | Detected | Remediated | Passed |
+| **SEC-03** | **CWE-502:** Insecure Deserialization (`pickle`) | CRITICAL | Detected | Remediated | Passed |
+| **SEC-04** | **CWE-327:** Broken Hash (`hashlib.md5`) | MEDIUM | Excluded (Policy) | Not Triggered | Passed |
+| **SEC-05** | **CWE-95:** Dynamic Code Execution (`exec`) | HIGH | Detected | Remediated | Passed |
+| **Summary** | **4 / 5 Intercepted (80.0%)** | — | **4 / 4 Remediated (100.0%)** | **0 Residual Exploits** | **5 / 5 Passed (100.0%)** |
 
-#### 🔍 Production Security Deep Dive: Why Was CWE-327 (MD5) Not Intercepted?
-In high-throughput production environments, the cost of an insecure code execution vulnerability (Remote Code Execution / Arbitrary Command Execution) is catastrophic, whereas the cost of false-positive pipeline halts can paralyze automated CI/CD workflows. 
+#### Security Policy & Severity Threshold Trade-offs
+Arbitra balances security posture against false-positive blocking rates in continuous execution pipelines:
 
-The empirical benchmark revealed a deliberate architectural trade-off in the SAST configuration:
-1. **Severity Thresholding (`CRITICAL` & `HIGH` vs. `MEDIUM`):**  
-   Arbitra's pre-execution security gate actively halts execution on `CRITICAL` and `HIGH` severity findings (CWE-95, CWE-78, CWE-502). All RCE and injection attack vectors were **100% intercepted and neutralized**.
-2. **Context-Blind Static Analysis Heuristics:**  
-   In Semgrep's `p/security-audit` rulepack, `hashlib.md5()` is flagged with **`WARNING / MEDIUM`** severity because MD5 is widely utilized in non-cryptographic contexts (such as content-addressable caching, deduplication, and file checksums). Without web framework request taint tracking, flagging all MD5 invocations causes high false-positive noise.
-3. **Defense-in-Depth Tuning:**  
-   For environments handling sensitive credentials or cryptographic key derivation, Arbitra's scanner severity threshold in `app/sast_scanner.py` can be dialed down from `--severity ERROR` to `--severity WARNING` to strictly block weak hash algorithms, trading off pipeline throughput for stricter cryptographic hygiene.
-
----
-
-## 🛠️ Tech Stack
-
-- **Agent Orchestration:** LangGraph, LangChain, Groq API (`openai/gpt-oss-120b` default)
-- **API & Worker:** FastAPI, Taskiq, Taskiq-Redis, Redis 7, Pydantic v2
-- **Database & Persistence:** PostgreSQL 16, SQLAlchemy 2.0 (Async), `psycopg 3`
-- **Security & Sandboxing:** Semgrep Docker (`p/security-audit`), Docker CLI (`--network none`)
-- **Presentation Layer:** Aiogram 3 (Telegram Bot), HTTPX
+1. **Threshold Configuration:**  
+   The primary static audit gate rejects code on `CRITICAL` and `HIGH` findings. All remote code execution (RCE) and process injection vectors (CWE-95, CWE-78, CWE-502) were intercepted and remediated without human escalation.
+2. **Context-Blind Static Analysis (CWE-327):**  
+   Semgrep's standard rulepack categorizes `hashlib.md5()` as `WARNING / MEDIUM` because MD5 remains valid for non-security use cases (e.g., checksums, cache keys). Without runtime taint tracking tracing inputs to credential derivation, unconditional blocking of MD5 results in false-positive rejections.
+3. **Threshold Tuning:**  
+   In compliance-sensitive environments, the scanner policy in `app/sast_scanner.py` can be adjusted from `--severity ERROR` to `--severity WARNING` to strictly reject non-collision-resistant hashing algorithms at the cost of pipeline throughput.
 
 ---
 
-## 🚀 Quickstart
+## Technical Specifications
+
+* **Orchestration:** LangGraph, LangChain, Groq API
+* **Observability & Analytics:** Langfuse (distributed tracing, token tracking, cost analytics, latency profiling)
+* **Backend:** Python 3.12, FastAPI, Taskiq, Taskiq-Redis, Redis 7, Pydantic v2
+* **Storage & State:** PostgreSQL 16, SQLAlchemy 2.0 (Async), psycopg 3
+* **Static Analysis & Sandboxing:** Semgrep (`p/security-audit`), Docker Engine (`--network none`)
+* **Interface & Polling:** Aiogram 3, HTTPX
+
+---
+
+## Setup & Deployment
 
 ### Prerequisites
-- Docker & Docker Compose
-- Access to host Docker socket (`/var/run/docker.sock`)
+* Docker 24.0+ and Docker Compose v2+
+* Local Docker daemon socket access (`/var/run/docker.sock`)
+
+### 1. Configuration
+Clone the repository and initialize the environment file:
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/spbstyle/arbitra.git
 cd arbitra
-
-# 2. Setup environment variables
 cp .env.example .env
 ```
 
-Configure your API keys in `.env`:
+Populate the required environment variables in `.env`:
+
 ```ini
+# Core LLM & Interface Credentials
 GROQ_API_KEY=gsk_your_groq_api_key_here
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+
+# Langfuse Observability & Cost Telemetry
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com # or self-hosted instance endpoint
 ```
 
-### 3. Launch Full Stack with Docker Compose
+### 2. Service Initialization
+Build and run the container topology:
+
 ```bash
 docker compose up --build -d
 ```
 
-All services will start in their dedicated containers:
-* **FastAPI Gateway:** `http://localhost:8000/docs`
+Service endpoints:
+* **API Gateway & Swagger UI:** `http://localhost:8000/docs`
 * **PostgreSQL:** `localhost:5433`
-* **Redis Broker:** `localhost:6379`
-* **Taskiq Worker:** Active (listening for jobs)
-* **Telegram Bot:** Polling updates live
+* **Redis:** `localhost:6379`
+* **Worker & Bot:** Managed background processes within Docker Compose network
 
 ---
 
-## 📡 API Endpoints
+## API Reference
 
-### 1. Enqueue Task
+### Enqueue Synthesis Task
 ```bash
 curl -X POST "http://localhost:8000/api/v1/tasks" \
      -H "Content-Type: application/json" \
@@ -154,12 +165,12 @@ curl -X POST "http://localhost:8000/api/v1/tasks" \
      }'
 ```
 
-### 2. Poll Status & Results
+### Query Task Status
 ```bash
 curl -X GET "http://localhost:8000/api/v1/tasks/{task_id}"
 ```
 
-### 3. Approve Sandbox Execution (HITL)
+### Human-in-the-Loop Execution Sign-off
 ```bash
 curl -X POST "http://localhost:8000/api/v1/tasks/{task_id}/resume" \
      -H "Content-Type: application/json" \
@@ -168,37 +179,39 @@ curl -X POST "http://localhost:8000/api/v1/tasks/{task_id}/resume" \
 
 ---
 
-## 📁 Repository Layout
+## Repository Structure
 
 ```text
 arbitra/
 ├── app/
-│   ├── main.py                 # FastAPI Gateway (REST API endpoints & lifespan)
-│   ├── database.py            # Async SQLAlchemy connection engine & session pool
-│   ├── graph.py               # LangGraph state machine & node transitions
-│   ├── interface_extractor.py # AST-based blackbox contract signature extractor
-│   ├── models.py              # PostgreSQL domain entities (Task, Run)
-│   ├── sandbox.py             # Air-gapped Docker execution harness
-│   ├── sast_scanner.py        # Semgrep container scanner wrapper
-│   └── tasks.py               # Taskiq distributed task definitions
+│   ├── main.py                 # FastAPI routing and lifespan definitions
+│   ├── database.py            # Async database engine and session factories
+│   ├── graph.py               # LangGraph state machine and conditional transitions
+│   ├── interface_extractor.py # AST-based contract extraction
+│   ├── models.py              # SQLAlchemy declarative models
+│   ├── sandbox.py             # Docker container isolation harness
+│   ├── sast_scanner.py        # Semgrep container interface wrapper
+│   └── tasks.py               # Taskiq distributed task handlers
 │
-├── bot.py                     # Aiogram 3 Telegram Bot client (live stage polling & HITL)
-├── run_worker.py              # Taskiq asynchronous worker process runner
-├── benchmark.py               # OpenAI HumanEval automated evaluation harness
-├── security_benchmark.py      # Adversarial security & remediation benchmark harness
+├── bot.py                     # Aiogram 3 presentation layer and review hooks
+├── run_worker.py              # Taskiq worker process bootstrap
+├── benchmark.py               # HumanEval execution and validation suite
+├── security_benchmark.py      # Adversarial security test harness
 │
-├── docker-compose.yml         # Multi-container orchestration specification
-├── Dockerfile                 # Application image build instructions
-├── requirements.txt           # Project runtime dependencies
-├── .env.example               # Environment variables template
+├── docker-compose.yml         # Container topology specification
+├── Dockerfile                 # Application base image definition
+├── requirements.txt           # Python dependency manifest
 └── README.md                  # Project documentation
 ```
 
 ---
 
-## 📄 License
-This project is licensed under the [MIT License](LICENSE).
+## License
 
-## 📬 Contact & Author
+Distributed under the terms of the [MIT License](LICENSE).
+
+## Author
+
 * **GitHub:** [@spbstyle](https://github.com/spbstyle)
 * **Telegram:** [@fiatow](https://t.me/fiatow)
+* **Email:** spbstyledev@gmail.com
