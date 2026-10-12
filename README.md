@@ -48,7 +48,7 @@ flowchart TD
 ## Core Architectural Components
 
 * **Static Security Verification (SAST):** Before compilation or execution, generated source code is evaluated via Semgrep within an isolated container environment. Detected injection primitives (`eval`, `exec`, `shell=True`, `pickle.loads`) immediately trigger an autonomous remediation AST node.
-* **OS-Level Process Isolation:** Dynamic execution and test verification run inside ephemeral, networkless (`--network none`) Docker containers with enforced kernel limits (128MB RAM, 1 CPU quota, strict PID limits) to mitigate resource exhaustion and container escapes.
+* **OS-Level Process Isolation:** Dynamic execution and test verification run inside ephemeral, networkless (`--network none`) Docker containers with enforced kernel limits (256MB RAM, 1 CPU quota, strict PID limits) to mitigate resource exhaustion and container escapes.
 * **Traceback-Driven Self-Healing:** Runtime errors and assertion failures from the sandbox are captured, parsed, and mapped back to AST source positions. The state machine allows up to three iterative reflection attempts to resolve edge cases.
 * **Stateful Human-in-the-Loop (HITL) Interruption:** The LangGraph execution graph conditionally pauses prior to sandbox execution, exposing source diffs and static analysis findings for human sign-off via Telegram callbacks or REST API webhooks.
 * **Decoupled Asynchronous Processing:** The control plane (FastAPI) offloads agent orchestration to distributed background workers via Taskiq and Redis, avoiding event-loop starvation during blocking LLM inference and container lifecycles.
