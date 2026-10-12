@@ -204,4 +204,4 @@ Distributed under the terms of the [MIT License](LICENSE).
 
 * **GitHub:** [@spbstyle](https://github.com/spbstyle)
 * **Telegram:** [@fiatow](https://t.me/fiatow)
-* * **Email:** [spbstyledev@gmail.com](spbstyledev@gmail.com)
+* **Email:** [spbstyledev@gmail.com](spbstyledev@gmail.com)
