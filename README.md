@@ -132,10 +132,18 @@ Populate the required environment variables in `.env`:
 GROQ_API_KEY=gsk_your_groq_api_key_here
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 
-# Langfuse Observability & Cost Telemetry
+# Langfuse Observability & Cost Telemetry (Optional)
 LANGFUSE_PUBLIC_KEY=pk-lf-...
 LANGFUSE_SECRET_KEY=sk-lf-...
 LANGFUSE_HOST=https://cloud.langfuse.com # or self-hosted instance endpoint
+
+# Database & Cache Connections
+# For local run without Docker, replace service names with localhost
+DATABASE_URL=postgresql+psycopg://...
+REDIS_URL=redis://...
+
+# Internal API Gateway URL for Telegram Bot
+API_BASE_URL=http://...
 ```
 
 ### 2. Service Initialization
